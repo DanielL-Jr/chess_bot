@@ -8,6 +8,12 @@ app.use(cors());
 
 app.post("/", (req, res) => {
   const fen = req.body.fen;
+  const eval = eval(fen);
+
+  res.status(200).json({ eval });
+});
+
+function eval(fen) {
   const game = new Chess(fen);
   const board = game.board();
   let wMaterial = 0;
@@ -48,8 +54,7 @@ app.post("/", (req, res) => {
       }
     }
   }
-  res.status(200).json({ eval: wMaterial - bMaterial });
-});
+}
 
 app.listen(3000, () => {
   console.log("Rodando servidor na porta 3000");
