@@ -60,35 +60,40 @@ function eval(fen) {
 
 function search(fen) {
   const game = new Chess(fen);
-  
-  let games = Array(game.moves().length);
-  let evals = Array(game.moves().length);
-  for (let i = 0; i < game.moves().length; i++) {
-    games[i] = new Chess(fen);
-    games[i].move(game.moves()[i]);
-    evals[i] = eval(games[i].fen());
+
+  const moves = game.moves();
+  const games = [];
+  const evals = [];
+
+  for (let i = 0; i < moves.length; i++) {
+    const newGame = new Chess(fen);
+    newGame.move(moves[i]);
+
+    games.push(newGame);
+    evals.push(eval(newGame.fen()));
   }
-  let bestEval;
-  let bestEvalIndex;
-  if (game.turn() == "w") {
-    bestEval = -Infinity;
-    for (let i = 0; i < game.moves().length; i++) {
-      if (evals[i] > bestEval) {
-        bestEval = evals[i];
-        bestEvalIndex = i;
-      }
-    }
-  } else {
-    bestEval = Infinity;
-    for (let i = 0; i < game.moves().length; i++) {
-      if (evals[i] < bestEval) {
-        bestEval = evals[i];
-        bestEvalIndex = i;
-      }
+
+  let bestEval = game.turn() === "w" ? -Infinity : Infinity;
+  let bestMoves = [];
+
+  for (let i = 0; i < evals.length; i++) {
+    if (
+      (game.turn() == "w" && evals[i] > bestEval) ||
+      (game.turn() == "b" && evals[i] < bestEval)
+    ) {
+      bestEval = evals[i];
+      bestMoves.length = 0;
+      bestMoves.push(moves[i]);
+    } else if (evals[i] === bestEval) {
+      bestMoves.push(moves[i]);
     }
   }
-  const move = game.moves({ verbose: true })[bestEvalIndex];
-  return move;
+
+  // Escolher movimento aleatório entre os melhores
+  const randomIndex = Math.floor(Math.random() * bestMoves.length);
+  const chosenMove = game.move(bestMoves[randomIndex]);
+
+  return chosenMove;
 }
 
 app.listen(3000, () => {
