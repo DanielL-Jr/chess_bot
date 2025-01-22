@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ptBR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Index</title>
+    <link rel="stylesheet" href="./chessboardjs/css/chessboard-1.0.0.css" />
+  </head>
+  <body>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+    <div id="myBoard" style="width: 400px"></div>
+
+    <script src="./chessboardjs/js/chessboard-1.0.0.js"></script>
+    <script type="module">
+      import { Chess } from "https://cdn.skypack.dev/chess.js";
+
+      var config = {
+        draggable: true,
+        dropOffBoard: "snapback",
+        position: "start",
+        onSnapEnd: () => {
+          // Garantir que o tabuleiro esteja atualizado
+          board.position(game.fen());
+        },
+        onDragStart: (source, piece) => {
+          // Prevenir movimentos inválidos:
+          if (
+            game.isGameOver() ||
+            (game.turn() === "w" && piece.startsWith("b")) ||
+            (game.turn() === "b" && piece.startsWith("w"))
+          ) {
+            return false;
+          }
+        },
+        onDrop: (source, target) => {
+          // Tentar realizar o movimento no chess.js
+          const move = game.move({
+            from: source,
+            to: target,
+            promotion: "q", // Sempre promove para uma rainha
+          });
+
+          // Se o movimento for inválido, retorna a peça à posição original
+          if (move === null) return "snapback";
+
+          // Atualizar a posição do tabuleiro
+          board.position(game.fen());
+
+          // Fazer o movimento da IA
+          setTimeout(() => {
+            jogarIA();
+          }, 500); // Pequeno atraso para simular "pensar"
+        },
+      };
+
+      const game = new Chess();
+
+      var board = ChessBoard("myBoard", config);
+
+      // Função para a IA jogar (exemplo: movimento aleatório)
+      function jogarIA() {
+        const movimentos = game.moves();
+
+        if (movimentos.length === 0) {
+          alert("Fim de jogo!");
+          return;
+        }
+
+        // Escolher um movimento aleatório
+        const movimentoIA =
+          movimentos[Math.floor(Math.random() * movimentos.length)];
+        game.move(movimentoIA);
+
+        // Atualizar o tabuleiro com o movimento da IA
+        board.position(game.fen());
+
+        // Verificar se o jogo acabou
+        if (game.isGameOver()) {
+          alert("Fim de jogo!");
+        }
+      }
+    </script>
+  </body>
+</html>
