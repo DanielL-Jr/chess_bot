@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Index</title>
     <link rel="stylesheet" href="./chessboardjs/css/chessboard-1.0.0.css" />
+    <style>
+      body {
+        background-color: rgb(51, 51, 51);
+      }
+    </style>
   </head>
   <body>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
@@ -73,10 +78,6 @@
         // Escolher um movimento aleatório
         const movimentoIA =
           movimentos[Math.floor(Math.random() * movimentos.length)];
-        game.move(movimentoIA);
-
-        // Atualizar o tabuleiro com o movimento da IA
-        board.position(game.fen());
 
         const fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Substitua pelo FEN desejado
 
@@ -89,7 +90,11 @@
         })
           .then((response) => response.json())
           .then((data) => {
-            console.log(data.eval); // Aqui você tem o valor de eval calculado pelo servidor
+            console.log(data); // Aqui você tem o valor de eval calculado pelo servidor
+
+            game.move(data.move);
+            // Atualizar o tabuleiro com o movimento da IA
+            board.position(game.fen());
           })
           .catch((error) => console.error("Erro:", error));
 

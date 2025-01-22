@@ -8,9 +8,10 @@ app.use(cors());
 
 app.post("/", (req, res) => {
   const fen = req.body.fen;
-  const eval = eval(fen);
 
-  res.status(200).json({ eval });
+  const move = search(fen);
+
+  res.status(200).json({ move });
 });
 
 function eval(fen) {
@@ -54,6 +55,40 @@ function eval(fen) {
       }
     }
   }
+  return wMaterial - bMaterial;
+}
+
+function search(fen) {
+  const game = new Chess(fen);
+  
+  let games = Array(game.moves().length);
+  let evals = Array(game.moves().length);
+  for (let i = 0; i < game.moves().length; i++) {
+    games[i] = new Chess(fen);
+    games[i].move(game.moves()[i]);
+    evals[i] = eval(games[i].fen());
+  }
+  let bestEval;
+  let bestEvalIndex;
+  if (game.turn() == "w") {
+    bestEval = -Infinity;
+    for (let i = 0; i < game.moves().length; i++) {
+      if (evals[i] > bestEval) {
+        bestEval = evals[i];
+        bestEvalIndex = i;
+      }
+    }
+  } else {
+    bestEval = Infinity;
+    for (let i = 0; i < game.moves().length; i++) {
+      if (evals[i] < bestEval) {
+        bestEval = evals[i];
+        bestEvalIndex = i;
+      }
+    }
+  }
+  const move = game.moves({ verbose: true })[bestEvalIndex];
+  return move;
 }
 
 app.listen(3000, () => {
