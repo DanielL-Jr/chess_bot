@@ -104,41 +104,47 @@ function minimax(fen, depth, isMaximizingPlayer) {
 
   if (depth === 0 || game.isGameOver()) {
     const evaluation = eval(game.fen()); // Sua função de avaliação
-    //console.log(`[DEPTH ${depth}] Avaliação da folha: ${evaluation} (FEN: ${fen})`);
     return { evaluation: evaluation, move: null };
   }
 
-  //console.log(`[DEPTH ${depth}] Avaliando posição: ${fen}`);
   // Caso não esteja numa folha
   const moves = game.moves();
 
   let bestMove = null;
   let bestValue = isMaximizingPlayer ? -Infinity : Infinity;
+  let bestMoves = [];
 
   for (const move of moves) {
     const newGame = new Chess(fen);
     newGame.move(move);
 
-    //console.log(`[DEPTH ${depth}] Testando movimento: ${move}`);
-
-    const result = minimax(newGame.fen(), depth - 1, !isMaximizingPlayer);
-
-    //console.log(`[DEPTH ${depth}] Movimento: ${move}, Avaliação retornada: ${result.evaluation}`);
+    const result = minimax(
+      newGame.fen(),
+      depth - 1,
+      !isMaximizingPlayer,
+    );
 
     if (isMaximizingPlayer) {
       if (result.evaluation > bestValue) {
         bestValue = result.evaluation;
         bestMove = move;
+        bestMoves = [move];
+      } else if (result.evaluation === bestValue) {
+        bestMoves.push(move);
       }
     } else {
       if (result.evaluation < bestValue) {
         bestValue = result.evaluation;
         bestMove = move;
+        bestMoves = [move];
+      } else if (result.evaluation === bestValue) {
+        bestMoves.push(move);
       }
     }
   }
 
-  //console.log( `[DEPTH ${depth}] Melhor movimento: ${bestMove}, Melhor avaliação: ${bestValue}`);
+  // Escolher aleatoriamente entre os melhores movimentos
+  bestMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
 
   return {
     evaluation: bestValue,
