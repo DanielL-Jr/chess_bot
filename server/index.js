@@ -23,6 +23,19 @@ function eval(fen) {
   let wMaterial = 0;
   let bMaterial = 0;
 
+  if (game.isGameOver()) {
+    if (game.isCheckmate()) {
+      const winner = game.turn() === "w" ? "b" : "w";
+      if (winner === "w") {
+        return Infinity;
+      } else {
+        return -Infinity;
+      }
+    }else{
+      return 0;
+    }
+  }
+
   for (const row of board) {
     for (const square of row) {
       if (!square) {
@@ -118,11 +131,7 @@ function minimax(fen, depth, isMaximizingPlayer) {
     const newGame = new Chess(fen);
     newGame.move(move);
 
-    const result = minimax(
-      newGame.fen(),
-      depth - 1,
-      !isMaximizingPlayer,
-    );
+    const result = minimax(newGame.fen(), depth - 1, !isMaximizingPlayer);
 
     if (isMaximizingPlayer) {
       if (result.evaluation > bestValue) {
