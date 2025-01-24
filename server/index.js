@@ -168,6 +168,16 @@ function minimax(fen, depth, isMaximizingPlayer) {
   return result;
 }
 
-app.listen(3000, () => {
-  console.log("Rodando servidor na porta 3000");
+// Pegar os argumentos de linha de comando
+const args = process.argv.slice(2); // Remove os dois primeiros elementos
+let port = 3000; // Porta padrão
+
+// Procurar o argumento '--port'
+const portIndex = args.indexOf('--port');
+if (portIndex !== -1 && args[portIndex + 1]) {
+    port = parseInt(args[portIndex + 1], 10); // Define a porta especificada
+}
+
+app.listen(port, () => {
+  console.log(`Rodando servidor na porta ${port}`);
 });
