@@ -31,7 +31,7 @@ function eval(fen) {
       } else {
         return -Infinity;
       }
-    }else{
+    } else {
       return 0;
     }
   }
@@ -112,12 +112,18 @@ function search(fen) {
   return chosenMove;
 }
 
+const positionCache = new Map();
+
 function minimax(fen, depth, isMaximizingPlayer) {
   const game = new Chess(fen);
 
   if (depth === 0 || game.isGameOver()) {
     const evaluation = eval(game.fen()); // Sua função de avaliação
     return { evaluation: evaluation, move: null };
+  }
+
+  if (positionCache.has(fen)) {
+    return positionCache.get(fen);
   }
 
   // Caso não esteja numa folha
@@ -155,10 +161,11 @@ function minimax(fen, depth, isMaximizingPlayer) {
   // Escolher aleatoriamente entre os melhores movimentos
   bestMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
 
-  return {
-    evaluation: bestValue,
-    move: bestMove,
-  };
+  const result = { evaluation: bestValue, move: bestMove };
+  positionCache.set(fen, result);
+  console.log(`Cache atualizado: ${positionCache.size} posições armazenadas.`);
+
+  return result;
 }
 
 app.listen(3000, () => {
