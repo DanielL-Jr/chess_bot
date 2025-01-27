@@ -12,7 +12,7 @@ app.post("/", (req, res) => {
   const turn = game.turn() === "w" ? true : false;
 
   // Testar minimax com profundidade 2
-  const depth = 3;
+  const depth = 2;
   positionsAnalysed = 0;
   const result = minimax(fen, depth, turn);
   console.log("Melhor movimento:", result.move);
