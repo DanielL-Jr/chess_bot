@@ -8,11 +8,15 @@ app.use(cors());
 
 app.post("/", (req, res) => {
   const fen = req.body.fen;
+  const game = new Chess(fen);
+  const turn = game.turn() === "w" ? true : false;
 
   // Testar minimax com profundidade 2
-  const result = minimax(fen, 2, false);
+  const depth = 3;
+  positionsAnalysed = 0;
+  const result = minimax(fen, depth, turn);
   console.log("Melhor movimento:", result.move);
-  console.log("Avaliação da posição:", result.evaluation);
+  console.log(`Avaliação da posição:`, result.evaluation);
 
   res.status(200).json({ move: result.move });
 });
@@ -74,46 +78,6 @@ function eval(fen) {
   return wMaterial - bMaterial;
 }
 
-function search(fen) {
-  const game = new Chess(fen);
-
-  const moves = game.moves();
-  const games = [];
-  const evals = [];
-
-  for (let i = 0; i < moves.length; i++) {
-    const newGame = new Chess(fen);
-    newGame.move(moves[i]);
-
-    games.push(newGame);
-    evals.push(eval(newGame.fen()));
-  }
-
-  let bestEval = game.turn() === "w" ? -Infinity : Infinity;
-  let bestMoves = [];
-
-  for (let i = 0; i < evals.length; i++) {
-    if (
-      (game.turn() == "w" && evals[i] > bestEval) ||
-      (game.turn() == "b" && evals[i] < bestEval)
-    ) {
-      bestEval = evals[i];
-      bestMoves.length = 0;
-      bestMoves.push(moves[i]);
-    } else if (evals[i] === bestEval) {
-      bestMoves.push(moves[i]);
-    }
-  }
-
-  // Escolher movimento aleatório entre os melhores
-  const randomIndex = Math.floor(Math.random() * bestMoves.length);
-  const chosenMove = game.move(bestMoves[randomIndex]);
-
-  return chosenMove;
-}
-
-const positionCache = new Map();
-
 function minimax(fen, depth, isMaximizingPlayer) {
   const game = new Chess(fen);
 
@@ -122,9 +86,6 @@ function minimax(fen, depth, isMaximizingPlayer) {
     return { evaluation: evaluation, move: null };
   }
 
-  if (positionCache.has(fen)) {
-    return positionCache.get(fen);
-  }
 
   // Caso não esteja numa folha
   const moves = game.moves();
@@ -162,8 +123,6 @@ function minimax(fen, depth, isMaximizingPlayer) {
   bestMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
 
   const result = { evaluation: bestValue, move: bestMove };
-  positionCache.set(fen, result);
-  console.log(`Cache atualizado: ${positionCache.size} posições armazenadas.`);
 
   return result;
 }
@@ -173,9 +132,9 @@ const args = process.argv.slice(2); // Remove os dois primeiros elementos
 let port = 3000; // Porta padrão
 
 // Procurar o argumento '--port'
-const portIndex = args.indexOf('--port');
+const portIndex = args.indexOf("--port");
 if (portIndex !== -1 && args[portIndex + 1]) {
-    port = parseInt(args[portIndex + 1], 10); // Define a porta especificada
+  port = parseInt(args[portIndex + 1], 10); // Define a porta especificada
 }
 
 app.listen(port, () => {
