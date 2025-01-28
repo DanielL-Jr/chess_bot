@@ -100,22 +100,19 @@ function alphaBeta(game, depth, alpha, beta, isMaximizingPlayer) {
 
   // MAX
   if (isMaximizingPlayer) {
-    let maxEval = -Infinity;
-
     // BUSCA EM NÓS FILHOS
     for (const move of orderedMoves) {
       game.move(move);
       const result = alphaBeta(game, depth - 1, alpha, beta, false);
       game.undo();
 
-      if (result.evaluation > maxEval) {
-        maxEval = result.evaluation;
+      if (result.evaluation > alpha) { // alpha já representa o melhor valor encontrado
+        alpha = result.evaluation;
         bestMove = move;
         bestMoves = [move];
-      } else if (result.evaluation === maxEval) {
+      } else if (result.evaluation === alpha) {
         bestMoves.push(move);
       }
-      alpha = Math.max(alpha, result.evaluation);
 
       // Pruning
       if (beta <= alpha) {
@@ -125,24 +122,22 @@ function alphaBeta(game, depth, alpha, beta, isMaximizingPlayer) {
     // Escolher aleatoriamente entre os melhores movimentos
     bestMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
 
-    return { evaluation: maxEval, move: bestMove };
+    return { evaluation: alpha, move: bestMove };
   }
 
   // MIN
   else {
-    let minEval = Infinity;
-
     // BUSCA EM NÓS FILHOS
     for (const move of orderedMoves) {
       game.move(move);
       const result = alphaBeta(game, depth - 1, alpha, beta, true);
       game.undo();
 
-      if (result.evaluation < minEval) {
-        minEval = result.evaluation;
+      if (result.evaluation < beta) {
+        beta = result.evaluation;
         bestMove = move;
         bestMoves = [move];
-      } else if (result.evaluation === minEval) {
+      } else if (result.evaluation === beta) {
         bestMoves.push(move);
       }
       beta = Math.min(beta, result.evaluation);
@@ -155,7 +150,7 @@ function alphaBeta(game, depth, alpha, beta, isMaximizingPlayer) {
     // Escolher aleatoriamente entre os melhores movimentos
     bestMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
 
-    return { evaluation: minEval, move: bestMove };
+    return { evaluation: beta, move: bestMove };
   }
 }
 
