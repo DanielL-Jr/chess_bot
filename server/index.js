@@ -26,8 +26,7 @@ const WIN_VALUE = 1000;
 const DRAW_VALUE = 0;
 const LOSS_VALUE = -1000;
 
-function eval(fen) {
-  const game = new Chess(fen);
+function eval(game) {
   const board = game.board();
   let wMaterial = 0;
   let bMaterial = 0;
@@ -87,7 +86,7 @@ let positionsAnalysed;
 
 function alphaBeta(game, depth, alpha, beta, isMaximizingPlayer) {
   if (depth === 0 || game.isGameOver()) {
-    const evaluation = eval(game.fen()); // Sua função de avaliação
+    const evaluation = eval(game); // Sua função de avaliação
     positionsAnalysed++;
     return { evaluation: evaluation, move: null };
   }
@@ -104,7 +103,7 @@ function alphaBeta(game, depth, alpha, beta, isMaximizingPlayer) {
     let maxEval = -Infinity;
 
     // BUSCA EM NÓS FILHOS
-    for (const move of moves) {
+    for (const move of orderedMoves) {
       game.move(move);
       const result = alphaBeta(game, depth - 1, alpha, beta, false);
       game.undo();
@@ -134,7 +133,7 @@ function alphaBeta(game, depth, alpha, beta, isMaximizingPlayer) {
     let minEval = Infinity;
 
     // BUSCA EM NÓS FILHOS
-    for (const move of moves) {
+    for (const move of orderedMoves) {
       game.move(move);
       const result = alphaBeta(game, depth - 1, alpha, beta, true);
       game.undo();
