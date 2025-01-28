@@ -59,6 +59,14 @@
           // Atualizar a posição do tabuleiro
           board.position(game.fen());
 
+          const movimentos = game.moves();
+
+          // Só chama o bot caso ele tenha lances possíveis
+          if (movimentos.length === 0) {
+            alert("Fim de jogo!");
+            return;
+          }
+
           // Fazer o movimento da IA
           setTimeout(() => {
             jogarIA();
@@ -70,23 +78,10 @@
 
       var board = ChessBoard("myBoard", config);
 
-      // Função para a IA jogar (exemplo: movimento aleatório)
+      // Função para a IA jogar
       async function jogarIA() {
-        const movimentos = game.moves();
-
-        if (movimentos.length === 0) {
-          alert("Fim de jogo!");
-          return;
-        }
-
-        // Escolher um movimento aleatório
-        const movimentoIA =
-          movimentos[Math.floor(Math.random() * movimentos.length)];
-
-        const fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"; // Substitua pelo FEN desejado
-
         await fetch("http://localhost:3000", {
-          method: "POST", // Ou GET, dependendo da configuração no seu backend
+          method: "POST", 
           headers: {
             "Content-Type": "application/json",
           },
@@ -94,10 +89,10 @@
         })
           .then((response) => response.json())
           .then((data) => {
-            console.log(data); // Aqui você tem o valor de eval calculado pelo servidor
+            console.log(data); 
 
-            game.move(data.move);
             // Atualizar o tabuleiro com o movimento da IA
+            game.move(data.move);
             board.position(game.fen());
           })
           .catch((error) => console.error("Erro:", error));
