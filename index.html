@@ -20,10 +20,14 @@
     <script type="module">
       import { Chess } from "https://cdn.skypack.dev/chess.js";
 
+      const startpos =
+        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+      let fen = startpos;
+
       var config = {
+        position: fen,
         draggable: true,
         dropOffBoard: "snapback",
-        position: "start",
         onSnapEnd: () => {
           // Garantir que o tabuleiro esteja atualizado
           board.position(game.fen());
@@ -62,7 +66,7 @@
         },
       };
 
-      const game = new Chess();
+      const game = new Chess(fen);
 
       var board = ChessBoard("myBoard", config);
 
