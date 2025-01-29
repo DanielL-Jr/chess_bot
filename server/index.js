@@ -16,7 +16,7 @@ app.post("/", (req, res) => {
   positionsAnalysed = 0;
   const result = alphaBeta(game, depth, -Infinity, Infinity, turn);
   console.log(`Posições analisadas: ${positionsAnalysed}`);
-  console.log(`Melhor movimento: ${result.move}`);
+  console.log(`Melhor movimento: ${result.move.san}`);
   console.log(`Avaliação da posição: ${result.evaluation}`);
 
   res.status(200).json({ move: result.move });
@@ -92,7 +92,7 @@ function alphaBeta(game, depth, alpha, beta, isMaximizingPlayer) {
   }
 
   // Caso não esteja numa folha
-  const moves = game.moves();
+  const moves = game.moves({ verbose: true });
   const orderedMoves = orderMoves(moves, game);
 
   let bestMove = null;
@@ -106,7 +106,10 @@ function alphaBeta(game, depth, alpha, beta, isMaximizingPlayer) {
       const result = alphaBeta(game, depth - 1, alpha, beta, false);
       game.undo();
 
-      if (result.evaluation > alpha) { // alpha já representa o melhor valor encontrado
+      positionsAnalysed++; // Contabiliza o número de posições analisadas a cada movimento
+
+      if (result.evaluation > alpha) {
+        // alpha já representa o melhor valor encontrado
         alpha = result.evaluation;
         bestMove = move;
         bestMoves = [move];
@@ -132,6 +135,8 @@ function alphaBeta(game, depth, alpha, beta, isMaximizingPlayer) {
       game.move(move);
       const result = alphaBeta(game, depth - 1, alpha, beta, true);
       game.undo();
+
+      positionsAnalysed++; // Contabiliza o número de posições analisadas a cada movimento
 
       if (result.evaluation < beta) {
         beta = result.evaluation;
