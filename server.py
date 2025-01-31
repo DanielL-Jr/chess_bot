@@ -35,33 +35,23 @@ def piece_value(piece):
 
 logs = False
 
-def minimax(board, depth, maximizing, move_sequence=""):
+def negamax(board, depth, color, move_sequence=""):
         """Executa a busca Minimax e armazena mensagens organizadas por camadas."""
         if depth == 0 or board.is_game_over():
             evaluation = evaluate_board(board)
             return evaluation
 
         log_messages = [] # Armazena mensagens da segunda camada
+        best_score = -float("inf") # No negamax sempre se maximiza
 
-        if maximizing:
-            best_score = -float("inf")
-            for move in board.legal_moves:
-                move_notation = board.san(move)
-                board.push(move)
-                score = minimax(board, depth - 1, False, move_sequence + " " + move_notation)
-                log_messages.append(f"    {move_sequence} {move_notation} -> Score {score}")  # Indentação extra para a segunda camada
-                board.pop()
-                best_score = max(best_score, score)
-        else:
-            best_score = float("inf")
-            for move in board.legal_moves:
-                move_notation = board.san(move)
-                board.push(move)
-                score = minimax(board, depth - 1, True, move_sequence + " " + move_notation)
-                log_messages.append(f"    {move_sequence} {move_notation} -> Score {score}")  # Indentação extra para a segunda camada
-                board.pop()
-                best_score = min(best_score, score)
-        
+        for move in board.legal_moves:
+            move_notation = board.san(move)
+            board.push(move)
+            score = -negamax(board, depth - 1, -color, move_sequence + " " + move_notation)
+            log_messages.append(f"    {move_sequence} {move_notation} -> Score {score}")  # Indentação extra para a segunda camada
+            board.pop()
+            best_score = max(best_score, score)
+                
         if logs:
             for msg in log_messages:
                 print(msg)
@@ -74,19 +64,18 @@ def best_move(board, depth=3):
     best_move = None
     turn = board.turn
 
+    best_score = -float("inf")
     if turn == chess.WHITE:
-        maximizing = True
-        best_score = -float("inf")
+        color = 1
     else:
-        maximizing = False
-        best_score = float("inf")
+        color = -1
 
     print("==== Iniciando busca Minimax ====")
 
     for move in board.legal_moves:
         move_notation = board.san(move)
         board.push(move)
-        score = minimax(board, depth - 1, not maximizing, move_notation)
+        score = -negamax(board, depth - 1, -color, move_notation)
         board.pop()
 
         print(f"{move_notation} -> Score {score}")
@@ -95,7 +84,7 @@ def best_move(board, depth=3):
             print("-" * 40)  
             input("Pressione Enter para continuar para o próximo lance...")
 
-        if (score > best_score and maximizing) or (score < best_score and not maximizing):
+        if score > best_score : # Sempre maximizamos no Negamax
             best_score = score
             best_move = move
     
