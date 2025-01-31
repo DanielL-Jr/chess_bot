@@ -8,13 +8,44 @@
     <style>
       body {
         background-color: rgb(51, 51, 51);
+        color: white;
+        font-style: italic;
+      }
+      #container {
+        display: flex;
+        gap: 10px; /* Espaço entre o tabuleiro e a área das informações */
+      }
+
+      #info-jogadores {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between; /* Alinhar uma div no topo e outra no final */
+        height: 400px; /* Mesmo tamanho do tabuleiro */
+      }
+
+      #info-superior,
+      #info-meio,
+      #info-inferior {
+        width: 200px;
+        padding: 10px;
+        text-align: center;
       }
     </style>
   </head>
   <body>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 
-    <div id="myBoard" style="width: 400px"></div>
+    <div id="container">
+      <div id="myBoard" style="width: 400px"></div>
+
+      <div id="info-jogadores">
+        <div id="info-superior">Bot</div>
+        <div id="info-meio">
+          <button id="btnFlip">Trocar de cor</button>
+        </div>
+        <div id="info-inferior">Humano</div>
+      </div>
+    </div>
 
     <script src="./chessboardjs/js/chessboard-1.0.0.js"></script>
     <script type="module">
@@ -80,20 +111,27 @@
 
       // Função para a IA jogar
       async function jogarIA() {
-        await fetch("http://localhost:3000", {
-          method: "POST", 
+        await fetch("http://127.0.0.1:5000/best-move", {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ fen: game.fen() }), // Enviando o FEN no corpo da requisição
+          body: JSON.stringify({
+            fen: game.fen(),
+            depth: 2,
+          }), // Enviando o FEN no corpo da requisição
         })
           .then((response) => response.json())
           .then((data) => {
-            console.log(data); 
+            console.log(data);
 
             // Atualizar o tabuleiro com o movimento da IA
-            game.move(data.move);
-            board.position(game.fen());
+            if (data.move) {
+              game.move(data.move);
+              board.position(game.fen());
+            } else {
+              console.log("Movimento não recebido");
+            }
           })
           .catch((error) => console.error("Erro:", error));
 
@@ -102,6 +140,18 @@
           alert("Fim de jogo!");
         }
       }
+
+      // Mudar de cor
+      const btnFlip = document.getElementById("btnFlip");
+      btnFlip.addEventListener("click", () => {
+        game.load(fen);
+        board.position(game.fen());
+        board.flip();
+
+        if (board.orientation() === "black") {
+          jogarIA();
+        }
+      });
     </script>
   </body>
 </html>
