@@ -118,7 +118,7 @@
           },
           body: JSON.stringify({
             fen: game.fen(),
-            depth: 2,
+            depth: 4,
           }), // Enviando o FEN no corpo da requisição
         })
           .then((response) => response.json())

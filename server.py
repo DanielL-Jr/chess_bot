@@ -12,11 +12,11 @@ def evaluate_board(board):
     if board.is_game_over():
         white_is_winner = board.outcome().winner
         if white_is_winner:
-            return float("inf")
-        elif not white_is_winner:
-            return -float("inf")
-        else:
+            return 1000
+        elif white_is_winner is None:
             return 0
+        else:
+            return -1000
     return material_counter(board)
 
 def material_counter(board):
@@ -35,57 +35,71 @@ def piece_value(piece):
 
 logs = False
 
-def negamax(board, depth, color, move_sequence=""):
-        """Executa a busca Minimax e armazena mensagens organizadas por camadas."""
+def negamax(board, depth, alpha, beta, color, move_sequence=""):
+        """Executa a busca Negamax com logs da poda alfa-beta."""
         if depth == 0 or board.is_game_over():
-            evaluation = evaluate_board(board)
+            evaluation = color * evaluate_board(board)
+            if board.is_checkmate():
+                # evaluation é positivo para brancas e negativo para negras
+                # color é 1 quando brancas perdem
+                # color é -1 quando negras perdem
+                evaluation -= depth
+                # ou evaluation += depth * (color * -1)
             return evaluation
 
         log_messages = [] # Armazena mensagens da segunda camada
-        best_score = -float("inf") # No negamax sempre se maximiza
 
         for move in board.legal_moves:
             move_notation = board.san(move)
             board.push(move)
-            score = -negamax(board, depth - 1, -color, move_sequence + " " + move_notation)
+            score = -negamax(board, depth - 1, -beta, -alpha, -color, move_sequence + " " + move_notation)
             log_messages.append(f"    {move_sequence} {move_notation} -> Score {score}")  # Indentação extra para a segunda camada
             board.pop()
-            best_score = max(best_score, score)
-                
+
+            if score > alpha:
+                alpha = score  # Atualiza o melhor valor encontrado
+
+            if alpha >= beta:
+                log_messages.append(f"    Poda: alpha ({alpha}) >= beta ({beta})")
+                break  # Poda alfa-beta
+
         if logs:
             for msg in log_messages:
                 print(msg)
         
-        return best_score
+        return alpha
 
 def best_move(board, depth=3):
-    """Encontra o melhor movimento usando Minimax e exibe a busca organizada."""
+    """Encontra o melhor movimento usando Negamax com logs detalhados da poda alfa-beta."""
     
     best_move = None
     turn = board.turn
 
-    best_score = -float("inf")
     if turn == chess.WHITE:
         color = 1
     else:
         color = -1
+    
+    alpha = -float("inf")
+    beta = float("inf")
 
-    print("==== Iniciando busca Minimax ====")
+    print("==== Iniciando busca Negamax com Poda Alfa-Beta ====")
 
     for move in board.legal_moves:
         move_notation = board.san(move)
         board.push(move)
-        score = -negamax(board, depth - 1, -color, move_notation)
+        score = -negamax(board, depth - 1, -beta, -alpha, -color, move_notation)
         board.pop()
 
-        print(f"{move_notation} -> Score {score}")
+        
 
         if logs:
             print("-" * 40)  
             input("Pressione Enter para continuar para o próximo lance...")
 
-        if score > best_score : # Sempre maximizamos no Negamax
-            best_score = score
+        if score > alpha : # Sempre maximizamos no Negamax
+            print(f"{move_notation} -> Score {score}")
+            alpha = score
             best_move = move
     
     if best_move is None and board.legal_moves:
