@@ -71,9 +71,10 @@ def negamax(board, depth, alpha, beta, color, move_sequence=""):
 
 def best_move(board, depth=3):
     """Encontra o melhor movimento usando Negamax com logs detalhados da poda alfa-beta."""
-    
+    board_copy = board.copy()
+
     best_move = None
-    turn = board.turn
+    turn = board_copy.turn
 
     if turn == chess.WHITE:
         color = 1
@@ -85,11 +86,11 @@ def best_move(board, depth=3):
 
     print("==== Iniciando busca Negamax com Poda Alfa-Beta ====")
 
-    for move in board.legal_moves:
-        move_notation = board.san(move)
-        board.push(move)
-        score = -negamax(board, depth - 1, -beta, -alpha, -color, move_notation)
-        board.pop()
+    for move in board_copy.legal_moves:
+        move_notation = board_copy.san(move)
+        board_copy.push(move)
+        score = -negamax(board_copy, depth - 1, -beta, -alpha, -color, move_notation)
+        board_copy.pop()
 
         
 
@@ -102,8 +103,8 @@ def best_move(board, depth=3):
             alpha = score
             best_move = move
     
-    if best_move is None and board.legal_moves:
-        best_move = next(iter(board.legal_moves)) # Obtém primeiro movimento legal
+    if best_move is None and board_copy.legal_moves:
+        best_move = next(iter(board_copy.legal_moves)) # Obtém primeiro movimento legal
 
     return best_move
 
@@ -126,4 +127,4 @@ def get_best_move():
     return jsonify({"error": "Nenhum movimento possível"}), 400
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000, threaded=True)
