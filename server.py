@@ -33,10 +33,28 @@ def piece_value(piece):
     }
     return values.get(piece.piece_type, 0) * (1 if piece.color == chess.WHITE else -1)
 
+def sortMoves(board):
+    moves = list(board.legal_moves)  # Converte para lista
+    # Enumeramos para preservar a ordem original como critério final
+    sorted_moves = sorted(
+        enumerate(moves),
+        key=lambda item: (
+            not board.gives_check(item[1]),   # Cheques primeiro (False < True)
+            not board.is_capture(item[1]),      # Capturas antes de lances normais (False < True)
+            item[0]                           # Se não houver diferença, usa o índice original
+        )
+    )
+    # Retorna apenas os movimentos, descartando o índice
+    return [move for idx, move in sorted_moves]
+
+
 logs = False
 
-def negamax(board, depth, alpha, beta, color, move_sequence=""):
+def best_move(board, depth=3):
+    def negamax(board, depth, alpha, beta, color, move_sequence=""):
         """Executa a busca Negamax com logs da poda alfa-beta."""
+        nonlocal positionsAnalysed
+        positionsAnalysed += 1
         if depth == 0 or board.is_game_over():
             evaluation = color * evaluate_board(board)
             if board.is_checkmate():
@@ -49,7 +67,9 @@ def negamax(board, depth, alpha, beta, color, move_sequence=""):
 
         log_messages = [] # Armazena mensagens da segunda camada
 
-        for move in board.legal_moves:
+        sorted_moves = sortMoves(board)
+
+        for move in sorted_moves:
             move_notation = board.san(move)
             board.push(move)
             score = -negamax(board, depth - 1, -beta, -alpha, -color, move_sequence + " " + move_notation)
@@ -68,8 +88,7 @@ def negamax(board, depth, alpha, beta, color, move_sequence=""):
                 print(msg)
         
         return alpha
-
-def best_move(board, depth=3):
+    
     """Encontra o melhor movimento usando Negamax com logs detalhados da poda alfa-beta."""
     board_copy = board.copy()
 
@@ -85,8 +104,11 @@ def best_move(board, depth=3):
     beta = float("inf")
 
     print("==== Iniciando busca Negamax com Poda Alfa-Beta ====")
+    positionsAnalysed = 0
 
-    for move in board_copy.legal_moves:
+    sorted_moves = sortMoves(board_copy)
+
+    for move in sorted_moves:
         move_notation = board_copy.san(move)
         board_copy.push(move)
         score = -negamax(board_copy, depth - 1, -beta, -alpha, -color, move_notation)
@@ -106,6 +128,7 @@ def best_move(board, depth=3):
     if best_move is None and board_copy.legal_moves:
         best_move = next(iter(board_copy.legal_moves)) # Obtém primeiro movimento legal
 
+    print(f"Posições analisadas: {positionsAnalysed}")
     return best_move
 
 @app.route("/best-move", methods=["POST"])
@@ -120,11 +143,11 @@ def get_best_move():
         move = best_move(board, data["depth"])
     else:
         move = best_move(board)
-        
+    
 
     if move:
         return jsonify({"move": move.uci()})
     return jsonify({"error": "Nenhum movimento possível"}), 400
 
 if __name__ == "__main__":
-    app.run(debug=False, port=5000, threaded=True)
+    app.run(debug=True, port=5000, threaded=True)
