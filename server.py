@@ -8,6 +8,21 @@ CORS(app)
 board = chess.Board()
 
 def evaluate_board(board):
+    def mobility_score(board):
+        # Inicializa a pontuação
+        mobility_score = 0
+        
+        # Define o peso da mobilidade (quanto mais movimentos legais, maior o peso)
+        mobility_weight = 0.05
+        
+        # Conta o número total de movimentos legais possíveis
+        total_legal_moves = len(list(board.legal_moves))
+        
+        # Adiciona a mobilidade à pontuação
+        mobility_score += total_legal_moves * mobility_weight
+        
+        return mobility_score
+    
     """Avalia a posição do tabuleiro."""
     if board.is_game_over():
         white_is_winner = board.outcome().winner
@@ -17,7 +32,13 @@ def evaluate_board(board):
             return 0
         else:
             return -1000
-    return material_counter(board)
+        
+    material = material_counter(board)
+    mobility = mobility_score(board)
+
+    final_score = material + mobility
+
+    return final_score
 
 def material_counter(board):
     score = 0
