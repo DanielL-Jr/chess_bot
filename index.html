@@ -41,7 +41,8 @@
       <div id="info-jogadores">
         <div id="info-superior">Bot</div>
         <div id="info-meio">
-          <button id="btnFlip">Trocar de cor</button>
+          <button id="btnFlip">Inverter Tabuleiro</button>
+          <button id="btnBotColor"></button>
         </div>
         <div id="info-inferior">Humano</div>
       </div>
@@ -54,6 +55,8 @@
       const startpos =
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
       let fen = startpos;
+
+      let bot_color = "b";
 
       var config = {
         position: fen,
@@ -89,19 +92,13 @@
 
           // Atualizar a posição do tabuleiro
           board.position(game.fen());
-
-          const movimentos = game.moves();
-
-          // Só chama o bot caso ele tenha lances possíveis
-          if (movimentos.length === 0) {
-            alert("Fim de jogo!");
-            return;
+        },
+        onChange: (oldPos, newPos) => {
+          if (game.turn() === bot_color) {
+            if (!game.isGameOver()) {
+              jogarIA();
+            }
           }
-
-          // Fazer o movimento da IA
-          setTimeout(() => {
-            jogarIA();
-          }, 100); // Pequeno atraso para simular "pensar"
         },
       };
 
@@ -118,7 +115,7 @@
           },
           body: JSON.stringify({
             fen: game.fen(),
-            depth: 4,
+            time: 1,
           }), // Enviando o FEN no corpo da requisição
         })
           .then((response) => response.json())
@@ -134,24 +131,32 @@
             }
           })
           .catch((error) => console.error("Erro:", error));
-
-        // Verificar se o jogo acabou
-        if (game.isGameOver()) {
-          alert("Fim de jogo!");
-        }
       }
 
       // Mudar de cor
       const btnFlip = document.getElementById("btnFlip");
       btnFlip.addEventListener("click", () => {
-        game.load(fen);
+        //game.load(fen);
         board.position(game.fen());
         board.flip();
-
-        if (board.orientation() === "black") {
-          jogarIA();
-        }
       });
+      const btnBotColor = document.getElementById("btnBotColor");
+      btnBotColor.addEventListener("click", () => {
+        bot_color = bot_color == "w" ? "b" : "w";
+        if (bot_color == "w") {
+          btnBotColor.innerText = "Bot de Pretas";
+        } else {
+          btnBotColor.innerText = "Bot de Brancas";
+        }
+        if (game.turn() == bot_color) jogarIA();
+      });
+
+      if (bot_color == "w") {
+        btnBotColor.innerText = "Bot de Pretas";
+      } else {
+        btnBotColor.innerText = "Bot de Brancas";
+      }
+      if (game.turn() == bot_color) jogarIA();
     </script>
   </body>
 </html>

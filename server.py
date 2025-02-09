@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS  # Importa o CORS
 import chess
+import time
 
 app = Flask(__name__)
 CORS(app)
@@ -54,28 +55,42 @@ def piece_value(piece):
     }
     return values.get(piece.piece_type, 0) * (1 if piece.color == chess.WHITE else -1)
 
-def sortMoves(board):
+def sortMoves(board, previous_best_move=None):
     moves = list(board.legal_moves)  # Converte para lista
-    # Enumeramos para preservar a ordem original como critério final
+    
+    # Encontra o índice do previous_best_move, se presente
+    if previous_best_move in moves:
+        moves.remove(previous_best_move)  # Remove o previous_best_move da lista
+    
+    # Enumeramos os movimentos restantes para preservar o índice
     sorted_moves = sorted(
-        enumerate(moves),
+        enumerate(moves),  # Mantém os índices originais
         key=lambda item: (
             not board.gives_check(item[1]),   # Cheques primeiro (False < True)
-            not board.is_capture(item[1]),      # Capturas antes de lances normais (False < True)
+            not board.is_capture(item[1]),    # Capturas antes de lances normais (False < True)
             item[0]                           # Se não houver diferença, usa o índice original
         )
     )
-    # Retorna apenas os movimentos, descartando o índice
-    return [move for idx, move in sorted_moves]
 
+    # Se previous_best_move não for None, coloca na primeira posição
+    if previous_best_move is not None:
+        return [previous_best_move] + [move for idx, move in sorted_moves]
+    else:
+        return [move for idx, move in sorted_moves]
 
 logs = False
 
-def best_move(board, depth=3):
-    def negamax(board, depth, alpha, beta, color, move_sequence=""):
-        """Executa a busca Negamax com logs da poda alfa-beta."""
+def best_move(board, max_depth=10, max_time=None):
+
+    def negamax(board, depth, alpha, beta, color, start_time, max_time=None):
+        """Executa a busca Negamax com poda alfa-beta."""
+
+        if time.time() - start_time >= max_time:
+            raise TimeoutError
+
         nonlocal positionsAnalysed
         positionsAnalysed += 1
+
         if depth == 0 or board.is_game_over():
             evaluation = color * evaluate_board(board)
             if board.is_checkmate():
@@ -86,34 +101,30 @@ def best_move(board, depth=3):
                 # ou evaluation += depth * (color * -1)
             return evaluation
 
-        log_messages = [] # Armazena mensagens da segunda camada
-
         sorted_moves = sortMoves(board)
 
         for move in sorted_moves:
-            move_notation = board.san(move)
             board.push(move)
-            score = -negamax(board, depth - 1, -beta, -alpha, -color, move_sequence + " " + move_notation)
-            log_messages.append(f"    {move_sequence} {move_notation} -> Score {score}")  # Indentação extra para a segunda camada
+            try:
+                score = -negamax(board, depth - 1, -beta, -alpha, -color, start_time, max_time)
+            except TimeoutError:
+                board.pop()
+                raise # Propaga a interrupção para cima
+
             board.pop()
 
             if score > alpha:
                 alpha = score  # Atualiza o melhor valor encontrado
 
             if alpha >= beta:
-                log_messages.append(f"    Poda: alpha ({alpha}) >= beta ({beta})")
                 break  # Poda alfa-beta
-
-        if logs:
-            for msg in log_messages:
-                print(msg)
         
         return alpha
     
-    """Encontra o melhor movimento usando Negamax com logs detalhados da poda alfa-beta."""
+    """Encontra o melhor movimento usando Iterative Deepening + Negamax + Pode Alfa-Beta"""
     board_copy = board.copy()
 
-    best_move = None
+    best_move = next(iter(board_copy.legal_moves)) # Obtém primeiro movimento legal
     turn = board_copy.turn
 
     if turn == chess.WHITE:
@@ -124,31 +135,48 @@ def best_move(board, depth=3):
     alpha = -float("inf")
     beta = float("inf")
 
-    print("==== Iniciando busca Negamax com Poda Alfa-Beta ====")
     positionsAnalysed = 0
 
-    sorted_moves = sortMoves(board_copy)
+    start_time = time.time()  # Marca o tempo inicial
 
-    for move in sorted_moves:
-        move_notation = board_copy.san(move)
-        board_copy.push(move)
-        score = -negamax(board_copy, depth - 1, -beta, -alpha, -color, move_notation)
-        board_copy.pop()
+    previous_best_move = None  # Armazena o melhor lance da última profundidade
 
+    for depth in range(1, max_depth + 1):
+        current_best_move = None
+        best_score = -float("inf")
+
+        # Passa o melhor lance da profundidade anterior para sortMoves
+        sorted_moves = sortMoves(board_copy, previous_best_move)
+
+        for move in sorted_moves:
+            board_copy.push(move)
+            try:
+                score = -negamax(board_copy, depth - 1, -beta, -alpha, -color, start_time, max_time)
+            except TimeoutError:
+                board_copy.pop()
+                print(f"Tempo esgotado ({max_time}s), retornando lance da profundidade {depth-1}")
+                return best_move
+
+            board_copy.pop()
+
+            if score > best_score : # Sempre maximizamos no Negamax
+                best_score = score
+                current_best_move = move
+
+        # Se o tempo estourar, retorna o melhor movimento da última busca concluída
+        if max_time and (time.time() - start_time) >= max_time:
+            print(f"Tempo esgotado ({max_time}s), retornando lance da profundidade {depth-1}")
+            return best_move
         
+        # Atualiza o melhor movimento com base na última profundidade finalizada
+        best_move = current_best_move
+        previous_best_move = current_best_move  # Armazena para ser priorizado na próxima iteração
 
+        print(f"Profundidade {depth} concluída - Melhor Movimento: {board_copy.san(best_move)} - Score: {best_score}")
         if logs:
-            print("-" * 40)  
-            input("Pressione Enter para continuar para o próximo lance...")
-
-        if score > alpha : # Sempre maximizamos no Negamax
-            print(f"{move_notation} -> Score {score}")
-            alpha = score
-            best_move = move
+                print("-" * 40)  
+                input("Pressione Enter para continuar para o próximo lance...")
     
-    if best_move is None and board_copy.legal_moves:
-        best_move = next(iter(board_copy.legal_moves)) # Obtém primeiro movimento legal
-
     print(f"Posições analisadas: {positionsAnalysed}")
     return best_move
 
@@ -161,7 +189,10 @@ def get_best_move():
 
     board.set_fen(data["fen"])
     if "depth" in data:
-        move = best_move(board, data["depth"])
+        move = best_move(board, max_depth=data["depth"])
+    if "time" in data:
+        # Usa Iterative Deepening
+        move = best_move(board, max_time=data["time"])
     else:
         move = best_move(board)
     
