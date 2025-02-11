@@ -135,13 +135,20 @@
           .catch((error) => console.error("Erro:", error));
       }
 
-      // Mudar de cor
+      // Inverter Tabuleiro
       const btnFlip = document.getElementById("btnFlip");
       btnFlip.addEventListener("click", () => {
         //game.load(fen);
         board.position(game.fen());
         board.flip();
+        const divSuperior = document.getElementById("info-superior");
+        const divInferior = document.getElementById("info-inferior");
+        const temp = divSuperior.innerText;
+        divSuperior.innerText = divInferior.innerText;
+        divInferior.innerText = temp
       });
+      
+      // Mudar cor do BOT
       const btnBotColor = document.getElementById("btnBotColor");
       btnBotColor.addEventListener("click", () => {
         bot_color = bot_color == "w" ? "b" : "w";
@@ -150,6 +157,11 @@
         } else {
           btnBotColor.innerText = "Bot de Brancas";
         }
+        const divSuperior = document.getElementById("info-superior");
+        const divInferior = document.getElementById("info-inferior");
+        const temp = divSuperior.innerText;
+        divSuperior.innerText = divInferior.innerText;
+        divInferior.innerText = temp
         if (game.turn() == bot_color) jogarIA();
       });
 
