@@ -85,7 +85,7 @@ def best_move(board, max_depth=10, max_time=None):
     def negamax(board, depth, alpha, beta, color, start_time, max_time=None):
         """Executa a busca Negamax com poda alfa-beta."""
 
-        if time.time() - start_time >= max_time:
+        if max_time and time.time() - start_time >= max_time:
             raise TimeoutError
 
         nonlocal positionsAnalysed
@@ -190,7 +190,7 @@ def get_best_move():
     board.set_fen(data["fen"])
     if "depth" in data:
         move = best_move(board, max_depth=data["depth"])
-    if "time" in data:
+    elif "time" in data:
         # Usa Iterative Deepening
         move = best_move(board, max_time=data["time"])
     else:
