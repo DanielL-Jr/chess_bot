@@ -191,15 +191,36 @@ def get_best_move():
     if "depth" in data:
         move = best_move(board, max_depth=data["depth"])
     elif "time" in data:
-        # Usa Iterative Deepening
         move = best_move(board, max_time=data["time"])
+    elif "time_left" in data:
+        # front-end manda tempo em décimos de segundo
+        time_left = data["time_left"] / 10
+        allocated_time = (calculate_time_budget(time_left))
+        print(f"Tempo alocado: {allocated_time:.1f}s")
+        move = best_move(board, max_time=allocated_time)
     else:
         move = best_move(board)
-    
 
     if move:
         return jsonify({"move": move.uci()})
+    
     return jsonify({"error": "Nenhum movimento possível"}), 400
+
+def calculate_time_budget(time_left, safety_margin=0.1, min_time=1.0, max_time=30.0):
+    """
+    Calcula o tempo a ser gasto no movimento atual com base em:
+    - safety_margin: 10% do tempo reservado para operações de rede/overhead
+    - min_time: tempo mínimo garantido para evitar decisões apressadas
+    - max_time: evita gastar tempo excessivo em um único movimento
+    """
+    usable_time = time_left * (1 - safety_margin)
+    
+    # Estratégia básica: divide por movimentos estimados restantes
+    estimated_moves_remaining = 40
+    calculated_time = usable_time / estimated_moves_remaining
+    
+    # Aplica limites
+    return max(min(calculated_time, max_time), min_time)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000, threaded=True)

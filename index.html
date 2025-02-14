@@ -66,7 +66,7 @@
       let fen = startpos;
 
       const tempo_pensamento = 10;
-      const tempoInicial = 50 * 60 * 10;
+      const tempoInicial = 5 * 60 * 10;
       const incremento = 2 * 1 * 10;
       let tempoBot = tempoInicial;
       let tempoHumano = tempoInicial;
@@ -192,7 +192,7 @@
           },
           body: JSON.stringify({
             fen: game.fen(),
-            time: tempo_pensamento,
+            time_left: tempoBot,
           }), // Enviando o FEN no corpo da requisição
         })
           .then((response) => response.json())
